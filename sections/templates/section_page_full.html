@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+    <!-- Main Navigation -->
+    <div name="navigator" class="sticky-top"> <!-- navigátor scrolluje s pohybem po stránce -->
+        <!-- panel pro navigátor, s kolapsem na "lg" -->
+        <nav class="navbar navbar-expand-md navbar-dark bg-secondary rounded">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('homepage') }}">Domů<!-- Navigátor, eventuelně logo --></a>
+
+                <!-- button pro zobrazení navigator menu po kolapsu při snížení velikosti prohlížeče pod "lg" -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarToggler" aria-expanded="false">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto nav-pills">
+
+                        <!-- dokaz na domovskou stránku -->
+                        <!--
+                        <li class="nav-item">
+                            <a class="nav-link text-light" aria-current="page" href="{{ url_for('homepage') }}">Domů</a>
+                        </li>
+                        -->
+
+                        <!-- dropdown select pro stránky o průřezech -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Nástroje</a>
+
+                            <ul class="dropdown-menu bg-dark">
+                                <li><a class="dropdown-item disabled text-secondary" href="classification">Klasifikace průřezů</a></li>
+                                <li><a class="dropdown-item text-light" href="{{url_for('section_page.section_page')}}">Výpočet průřezových charekteristik</a></li>
+                                <li><a class="dropdown-item text-light" href="{{url_for('section_page.section_stresses')}}">Napětí na průřezu</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <!-- <li><a class="dropdown-item text-light" href="{{url_for('frame_structure_page.frame_structure_page')}}">Statická analýza</a></li> -->
+                                <li><a class="dropdown-item disabled text-secondary" href="javascript: void(0)">Statická analýza</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="{{url_for('section_page.section_theory')}}">Teorie</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- dropdown select pro stránky o analýze konstrukcí -->
+                        <!--
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Analýza konstrukcí</a>
+
+                            <ul class="dropdown-menu bg-dark">
+                                <li><a class="dropdown-item disabled text-secondary" href="">Statická analýza</a></li>
+                                <! -- <li><a class="dropdown-item text-light" href="{{url_for('frame_structure_page.frame_structure_page')}}">Statická analýza</a></li> -- >
+                                <li><a class="dropdown-item disabled text-secondary" href="ODM">Obecná deformační metoda</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="MESH">Metoda sítí (deskostěny)</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="FEM">Metoda konečných prvků</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="theory">Teorie</a></li>
+                            </ul>
+                        </li>
+                        -->
+
+                        <!-- dropdown select pro stránky o návrhu konstrukcí -->
+                        <!--
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Posouzení stavebních prvků</a>
+
+                            <ul class="dropdown-menu bg-dark">
+                                <li><a class="dropdown-item disabled text-secondary" href="ULS">Posouzení na prostou pevnost</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="ULSstabil">Posouzení na ztrátu stability</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="SLS">Posouzení mezních stavů použitelnosti</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="connection">Posouzení spojů</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="fire">Posouzení konstrukce na účinky požáru</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="theory">Teorie</a></li>
+                            </ul>
+                        </li>
+                        -->
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Section Cards -->
+    <div class="row padding collapse show" name="content" id="section_content">
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/IPE_section_pic.svg" id="IPE_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/HEB_section_pic.svg" id="HEB_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/UPE_section_pic.svg" id="UPE_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/L_section_pic.svg" id="L_s_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/T_section_pic.svg" id="T_s_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/RHS_section_pic.svg" id="RHS_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/CHS_section_pic.svg" id="CHS_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/crl_section_pic.svg" id="crl_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/rtg_section_pic.svg" id="rtg_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/cnv_section_pic.svg" id="cnv_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/mrg_section_pic.svg" id="mrg_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="card-dark text-center">
+                    <img class="card-img-top crossSectionIconBig img-responsive" src="static/pictures/svg/usr_section_pic.svg" id="usr_bar_switch" onClick = "createNewCrossSection(this.id);">
+                </div>
+            </div>
+
+
+    </div>
+    <!-- Section Cards -->
+
+    <!-- Area for selected sections -->
+    <div id="crossSections" class="container-fluid padding align-items-start justify-content-flex-start">
+        <div id="selected_section_card" class="section_field col-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3 col-xl-4 offset-xl-4 collapse"></div>
+    </div>
+    <!-- Area for selected sections -->
+
+
+    <script type="text/javascript" src = "static/js/jquery.js"></script>
+    <script type="text/javascript" src = "static/js/bootstrap.bundle.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+     -->
+    <script type="text/javascript" src = "static/js/tooltips.js"></script>
+    <script type="text/javascript" src = "static/js/workWithSections.js"></script>
+    <script type="text/javascript" src = "static/js/canvasScripts.js"></script>
+    <script type="text/javascript" src = "static/js/formInputsValidation.js"></script>
+    <script type="text/javascript" src = "static/js/switchInForms.js"></script>
+    <script type="text/javascript" src = "static/js/crossSectionObject.js"></script>
+    <script type="text/javascript" src = "static/js/mergedObject.js"></script>
+    <script type="text/javascript" src = "static/js/canvasObject.js"></script>
+    <script type="text/javascript" src = "static/js/newElements.js"></script>
+    <script type="text/javascript" src = "static/js/calculateScript.js"></script>
+    <script type="text/javascript" src = "static/js/sectionManager.js"></script>
+    <script type="text/javascript" src = "static/js/pdfCreator.js"></script>
+
+
+    <script src="static/js/html2pdf.bundle.js"></script>
+{% endblock %}

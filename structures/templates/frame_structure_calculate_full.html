@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+    <!-- Main Navigation -->
+    <div name="navigator" class="sticky-top"> <!-- navigátor scrolluje s pohybem po stránce -->
+        <!-- panel pro navigátor, s kolapsem na "lg" -->
+        <nav class="navbar navbar-expand-md navbar-dark bg-secondary rounded">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('homepage') }}">Domů<!-- Navigátor, eventuelně logo --></a>
+
+                <!-- button pro zobrazení navigator menu po kolapsu při snížení velikosti prohlížeče pod "lg" -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarToggler" aria-expanded="false">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto nav-pills">
+
+                        <!-- dokaz na domovskou stránku -->
+                        <!--
+                        <li class="nav-item">
+                            <a class="nav-link text-light" aria-current="page" href="{{ url_for('homepage') }}">Domů</a>
+                        </li>
+                        -->
+
+                        <!-- dropdown select pro stránky o průřezech -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Nástroje</a>
+
+                            <ul class="dropdown-menu bg-dark">
+                                <li><a class="dropdown-item disabled text-secondary" href="classification">Klasifikace průřezů</a></li>
+                                <li><a class="dropdown-item text-light" href="{{url_for('section_page.section_page')}}">Výpočet průřezových charekteristik</a></li>
+                                <li><a class="dropdown-item text-light" href="{{url_for('section_page.section_stresses')}}">Napětí na průřezu</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <!-- <li><a class="dropdown-item text-light" href="{{url_for('frame_structure_page.frame_structure_page')}}">Statická analýza</a></li> -->
+                                <li><a class="dropdown-item disabled text-secondary" href="javascript: void(0)">Statická analýza</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="javascript: void(0)">Teorie</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- dropdown select pro stránky o analýze konstrukcí -->
+                        <!--
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Analýza konstrukcí</a>
+
+                            <ul class="dropdown-menu bg-dark">
+                                <li><a class="dropdown-item disabled text-secondary" href="">Statická analýza</a></li>
+                                <! -- <li><a class="dropdown-item text-light" href="{{url_for('frame_structure_page.frame_structure_page')}}">Statická analýza</a></li> -- >
+                                <li><a class="dropdown-item disabled text-secondary" href="ODM">Obecná deformační metoda</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="MESH">Metoda sítí (deskostěny)</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="FEM">Metoda konečných prvků</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="theory">Teorie</a></li>
+                            </ul>
+                        </li>
+                        -->
+
+                        <!-- dropdown select pro stránky o návrhu konstrukcí -->
+                        <!--
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Posouzení stavebních prvků</a>
+
+                            <ul class="dropdown-menu bg-dark">
+                                <li><a class="dropdown-item disabled text-secondary" href="ULS">Posouzení na prostou pevnost</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="ULSstabil">Posouzení na ztrátu stability</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="SLS">Posouzení mezních stavů použitelnosti</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="connection">Posouzení spojů</a></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="fire">Posouzení konstrukce na účinky požáru</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item disabled text-secondary" href="theory">Teorie</a></li>
+                            </ul>
+                        </li>
+                        -->
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+        <div class="container-fluid padding align-items-start justify-content-flex-start">
+            <div id="frameStructureEnviroment" class="section_field collapse show">
+
+                <div class="card text-white bg-dark xs-10" id="usr">
+                    <div class="form-row justify-content-center headerPart rounded" id="headerPart">
+                        <div class="form-row justify-content-center headerPart rounded" id="cnv_headerPart">
+                            <legend>Statická analýza 2D prutové konstrukce</legend>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mt-2" id="myTab" role="tablist">
+                        <li class="nav-item-sm-12" role="presentation">
+                            <a class="nav-link active" id="geometry_section_href" onclick="createTabEnviroment(this.id);" data-toggle="tab" role="tab" data-target="#geometry_section">Konstrukce</a>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="support_section_href" onclick="createTabEnviroment(this.id);" data-toggle="tab" role="tab" data-target="#support_section">Podpory/spoje</a>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="material_section_href" onclick="createTabEnviroment(this.id);" data-toggle="tab" role="tab" data-target="#material_section">Materiály</a>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="section_section_href" onclick="createTabEnviroment(this.id);" data-toggle="tab" role="tab" data-target="#section_section">Pruty</a>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="load_section_href" onclick="createTabEnviroment(this.id);" data-toggle="tab" role="tab" data-target="#load_section">Zatížení</a>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="calculate_section_href" onclick="createTabEnviroment(this.id);" data-toggle="tab" role="tab" data-target="#calculate_section">Možnosti</a>
+                        </li>
+
+                        <li class="mx-2">
+                            <input type="button" id="loads_1" value="Moje konstrukce" onclick="openActualLcLoad(this);" class="btn btn-secondary rounded" data-toggle="modal" data-target="#structureManager" aria-expanded="false">
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="myTabContent">
+                        <form method="get" class="input_formular" id="structure_form" onchange="checkFormInputs(event);" onsubmit="ajaxSubmit(event)">
+                            <div class="tab-pane fade show active" id="geometry_section" role="tabpanel">
+                                <div class="container text-center">
+                                    <canvas id="myCanvas" class="canvasObject m-3" onmousemove="redrawAll(event);" onclick="getPointCoordinates(event); getNodesOfMembers();" onscroll="changeScale(event);" width="300px" height="300px">
+                                    </canvas>
+
+                                    <div class="row justify-content-center m-2">
+                                            <div class="col-9 col-sm-6 col-md-4 m-2">
+                                                <div class="row align-items-center justify-content-center">
+                                                    <label class="col-form-label">Rozměry plátna: </label>
+                                                </div>
+
+                                                <div class="row align-items-center justify-content-center my-2">
+                                                    <input type="text" id="widthOfCanvas" maxlength="5" minlength="1" min="1" max="2500" class="canvasInputs rounded" placeholder="Šířka: 300 mm" onchange="widthOfMyCanvas();">
+                                                </div>
+
+                                                <div class="row align-items-center justify-content-center my-2">
+                                                    <input type="text" id="heightOfCanvas" maxlength="5" minlength="1" min="1" max="2500" class="canvasInputs rounded" placeholder="Výška: 300 mm" onchange="heightOfMyCanvas();">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-9 col-sm-6 col-md-4 m-2">
+                                                <div class="row align-items-center justify-content-center">
+                                                    <label>Kroky mřížek: </label>
+                                                </div>
+
+                                                <div class="row align-items-center justify-content-center my-2">
+                                                    <input type="text" id="canvasAxes" maxlength="5" minlength="1" min="1" max="2500" class="canvasInputs rounded" placeholder="Osy: 50" onchange="redrawAll(&quot;&quot;);">
+                                                </div>
+
+                                                <div class="row align-items-center justify-content-center my-2">
+                                                    <input type="text" id="canvasGrid" maxlength="5" minlength="1" min="1" max="2500" class="canvasInputs rounded" placeholder="Grid: ne" onchange="canvasGridNew();">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    <div class="form-row align-items-center m-2">
+                                        <div class="col-9 offset-1 col-md-3 offset-md-3 my-2 my-md-0 justify-content-center">
+                                            <label>Měřítko: </label>
+                                        </div>
+
+                                        <div class="col-6 offset-3 offset-md-0 col-md-3 ml-md-2 justify-content-left">
+                                            <input type="text" id="scaleValue" maxlength="2" minlength="1" min="1" max="10" class="canvasInputs rounded" placeholder="1" onchange="redrawAll(&quot;&quot;);">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row align-items-center m-2" id="mesh_part">
+                                        <div class="col-9 offset-1 col-md-3 offset-md-3 my-2 my-md-0 justify-content-center" id="cnv_meshPart">
+                                            <label class="col-form-label" for="calculate_mesh_value">Velikost prvku sítě:</label>
+                                        </div>
+
+                                        <div class="col-6 offset-3 offset-md-0 col-md-3 ml-md-2 justify-content-left">
+                                            <input type="text" id="calculate_mesh_value" name="FE_number" maxlength="5" minlength="1" min="1" max="2500" class="form-control rounded">
+                                                <span id="cnv_calculate_mesh_value_check_valid"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row justify-content-left align-items-center m-2">
+                                        <div class="col-12 col-sm-6 offset-sm-3 offset-md-0 col-md-3 offset-md-3">
+                                            <input type="button" id="deleteButton" value="Smaž geometrii" onclick="deleteYourFrameDraw();" class="btn btn-secondary rounded">
+                                        </div>
+
+                                        <div class="col-12 col-sm-6 offset-sm-3 offset-md-0 col-md-3 ml-md-2">
+                                            <input type="button" id="deletePointButton" value="Smaž poslední bod" onclick="deleteLastPointOfFrame();" class="btn btn-secondary rounded my-2">
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="gridPointsX" class="noinput">
+                                    <input type="hidden" id="gridPointsY" class="noinput">
+                                    <input type="hidden" id="cnv_Xco" name="allClickedPointsX" class="noinput">
+                                    <input type="hidden" id="cnv_Yco" name="allClickedPointsY" class="noinput">
+                                    <input type="hidden" id="nod_X" class="noinput">
+                                    <input type="hidden" id="nod_Y" class="noinput">
+                                    <input type="hidden" id="actualCursorX" class="noinput">
+                                    <input type="hidden" id="actualCursorY" class="noinput">
+                                    <input type="hidden" id="newCursorX" class="noinput">
+                                    <input type="hidden" id="newCursorY" class="noinput">
+                                    <input type="hidden" id="numberOfPoints" name="numberOfPoints" class="noinput">
+                                    <input type="hidden" id="draw_detector" name="draw_detector" class="noinput" value="watch">
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="support_section" role="tabpanel">
+                            </div>
+
+                            <div class="tab-pane fade" id="material_section" role="tabpanel">
+                            </div>
+
+                            <div class="tab-pane fade" id="section_section" role="tabpanel">
+                            </div>
+
+                            <div class="tab-pane fade" id="load_section" role="tabpanel">
+                            </div>
+
+                            <div class="tab-pane fade" id="calculate_section" role="tabpanel">
+                            </div>
+
+                            <input type="hidden" id="structure_geometry" value="0">
+                            <input type="hidden" id="structure_supports" value="0">
+                            <input type="hidden" id="structure_materials" value="0">
+                            <input type="hidden" id="structure_members" value="0">
+                            <input type="hidden" id="structure_loads" value="0">
+                            <input type="hidden" id="structure_load_combinations" value="0">
+                            <input type="hidden" id="structure_options" value="0">
+
+                            <input type="hidden" id="structure_geometry_supports" value="0">
+                            <input type="hidden" id="structure_geometry_members" value="0">
+
+                            <input type="submit" id="usr_calculate" value="Výpočet" class="btn-block rounded disabledSubmit" disabled>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="sectionManager" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-labelledby="manager-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header justify-content-center">
+                                <h3 class="modal-title" id="manager-label">Moje uložené průřezy</h3>
+                            </div>
+
+                            <div class="modal-body">
+                                <button type="button" class="btn btn-primary" disabled>Získávám průřezy...
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                </button>
+                            </div>
+
+                            <div class="modal-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-5">
+                                        <input type="button" id="selectSection" name="selectSection" value="Vybrat" onclick="chooseUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="renameSection" name="renameSection" value="Přejmenovat" onclick="renameUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="deleteSection" name="deleteSection" value="Smazat" onclick="deleteUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="cancelSection" name="cancelSection" value="Zavřít" onclick="checkSubmitButton();" class="btn btn-secondary" data-dismiss="modal">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="sectionCreator" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-labelledby="creator-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header justify-content-center">
+                                <h3 class="modal-title" id="creator-label"></h3>
+                            </div>
+
+                            <div class="modal-body">
+
+                                <div class="row collapse show" name="content" id="section_content">
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/IPE_section_pic.svg" id="IPE_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/HEB_section_pic.svg" id="HEB_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/UPE_section_pic.svg" id="UPE_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/L_section_pic.svg" id="L_s_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/T_section_pic.svg" id="T_s_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/RHS_section_pic.svg" id="RHS_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/CHS_section_pic.svg" id="CHS_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/crl_section_pic.svg" id="crl_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/rtg_section_pic.svg" id="rtg_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/cnv_section_pic.svg" id="cnv_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 col-md-4 col-lg-3 text-center">
+                                        <div class="card-dark">
+                                            <img class="card-img-top crossSectionIconBig" src="static/pictures/svg/mrg_section_pic.svg" id="mrg_bar_switch" data-toggle="collapse" data-target="#section_content" onclick="createNewCrossSection(this.id); editCreatorFormular();">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Area for selected sections -->
+                                <div id="crossSections" class="container-fluid padding align-items-start justify-content-flex-start">
+                                    <div id="selected_section_card" class="section_field collapse"></div>
+                                </div>
+                                <!-- Area for selected sections -->
+                            </div>
+
+                            <div class="modal-footer justify-content-center">
+                                <div class="col-5">
+                                    <input type="button" id="selectCreatorSection" name="confirmSection" value="Přidat" onclick="confirmNewSection(); checkSubmit();" class="btn btn-secondary rounded" data-dismiss="modal">
+                                </div>
+
+                                <div class="col-5">
+                                    <input type="button" id="cancelCreatorSection" name="cancelSection" value="Zavřít" onclick="cancelCreator(); $('#section_content').collapse('toggle'); checkSubmit();" class="btn btn-secondary rounded" data-dismiss="modal">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="structureManager" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-labelledby="manager-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header justify-content-center">
+                                <h3 class="modal-title" id="structure-manager-label">Moje uložené konstrukce</h3>
+                            </div>
+
+                            <div class="modal-body">
+                                <button type="button" class="btn btn-primary" disabled>Získávám data...
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                </button>
+                            </div>
+
+                            <div class="modal-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-5">
+                                        <input type="button" id="selectStructure" name="selectSection" value="Vybrat" onclick="chooseUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="renameStructure" name="renameSection" value="Přejmenovat" onclick="renameUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="deleteStructure" name="deleteSection" value="Smazat" onclick="deleteUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="cancelStructure" name="cancelSection" value="Zavřít" onclick="checkSubmitButton();" class="btn btn-secondary" data-dismiss="modal">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="materialManager" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-labelledby="manager-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header justify-content-center">
+                                <h3 class="modal-title" id="manager-label">Moje uložené materiály</h3>
+                            </div>
+
+                            <div class="modal-body">
+                                <button type="button" class="btn btn-primary" disabled>Získávám data...
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                </button>
+                            </div>
+
+                            <div class="modal-footer">
+                                <div class="row justify-content-around">
+                                    <div class="col-5">
+                                        <input type="button" id="selectSection" name="selectSection" value="Vybrat" onclick="chooseUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="renameSection" name="renameSection" value="Upravit" onclick="renameUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="deleteSection" name="deleteSection" value="Smazat" onclick="deleteUserSections();" class="btn btn-secondary">
+                                    </div>
+
+                                    <div class="col-5">
+                                        <input type="button" id="cancelSection" name="cancelSection" value="Zavřít" onclick="checkSubmitButton();" class="btn btn-secondary" data-dismiss="modal">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="loadCombinations" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-labelledby="manager-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header justify-content-center">
+                                <h3 class="modal-title" id="combination-label"></h3>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="container p-2" id="availableLoadCases">
+                                    <div class="row justify-content-center m-2">
+                                        <h5>Dostupné zatěžovací stavy</h5>
+                                    </div>
+
+                                    <div class="row justify-content-between align-items-center m-2">
+                                        <div class="col-6 offset-1 justify-content-end">
+                                            <select id="available_lc_val_option">
+                                                <option value="lcMark">--ZS--</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-3 offset-1 justify-content-start">
+                                            <input type="button" id="addLcToCo" name="selectSection" value="Přidat" onclick="putLoadCaseToCombination();" class="btn btn-secondary rounded">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="container mt-3 p-2 loadCombinationsLoadCases">
+                                    <div class="row justify-content-center m-2">
+                                        <div id="combinationCasesPart" class="col-10">
+                                            <div class="row my-2 justify-content-center">
+                                                <h5>Zvolené zatěžovací stavy</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer justify-content-center">
+                                <div class="col-4">
+                                    <input type="button" id="cancelLoadCombination" name="cancelSection" value="Zavřít" onclick="saveCombinationsSchemes(); checkSubmit();" class="btn btn-secondary rounded" data-dismiss="modal">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="loadOfLoadCases" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-labelledby="manager-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header justify-content-center">
+                                <h3 class="modal-title" id="load-case-label"></h3>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="container mt-3 p-2 nodalLoads justify-content-center">
+                                    <div class="row justify-content-center m-2 mb-4">
+                                        <div class="col-10 text-center">
+                                            <h5>Uzlová zatížení</h5>
+                                        </div>
+
+                                        <div id="nodalLoadsPart" class="col-10">
+                                            <div class="row my-2">
+                                                <input type="button" id="nodalLoadButton" value="Přidat uzlové zatížení" onclick="addNewNodalLoadRow();" class="btn btn-secondary rounded">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="container mt-3 p-2 memberLoads justify-content-center">
+                                    <div class="row justify-content-center m-2 mb-4">
+                                        <div class="col-10 text-center">
+                                            <h5>Prutová zatížení</h5>
+                                        </div>
+
+                                        <div id="memberLoadsPart" class="col-10">
+                                            <div class="row my-2">
+                                                <input type="button" id="memberLoadButton" value="Přidat prutové zatížení" onclick="addNewMemberLoadRow();" class="btn btn-secondary rounded">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer justify-content-center">
+                                <div class="col-4">
+                                    <input type="button" id="cancelLoads" name="cancelSection" value="Zavřít" onclick="saveLoads(); checkSubmit();" class="btn btn-secondary rounded" data-dismiss="modal">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- !Area for selected sections -->
+
+
+    <script type="text/javascript" src = "static/js/jquery.js"></script>
+    <script type="text/javascript" src = "static/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src = "static/js/newElements.js"></script>
+    <script type="text/javascript" src = "static/js/calculateScript.js"></script>
+    <script type="text/javascript" src = "static/js/tooltips.js"></script>
+    <script type="text/javascript" src = "static/js/canvasScripts.js"></script>
+    <script type="text/javascript" src = "static/js/formInputsValidation.js"></script>
+    <script type="text/javascript" src = "static/js/canvasObject.js"></script>
+    <script type="text/javascript" src = "static/js/frameStructureScripts.js"></script>
+    <script type="text/javascript" src = "static/js/structureAnalysis.js"></script></script>
+
+    <script type="text/javascript" src = "static/js/workWithSections.js"></script>
+    <script type="text/javascript" src = "static/js/switchInForms.js"></script>
+    <script type="text/javascript" src = "static/js/crossSectionObject.js"></script>
+    <script type="text/javascript" src = "static/js/mergedObject.js"></script>
+    <script type="text/javascript" src = "static/js/sectionManager.js"></script>
+    <script type="text/javascript" src = "static/js/sectionStressesDialog.js"></script>
+
+    <!--<script>createTabEnviroment('geometry_section')</script>-->
+
+    <script src="static/js/html2pdf.bundle.js"></script>
+{% endblock %}
