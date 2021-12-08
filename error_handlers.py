@@ -24,7 +24,7 @@ class WrongDataError(Exception):
     description = "Nečitelná data!"
 
 
-class WrongSectionGeometry(Exception):
+class SectionGeometryError(Exception):
     code = 400
     description = "Chyba v zadání geometrie. Možné příčiny:\n" \
                   "- chybně určená dutina na složeném průřezu\n" \
@@ -34,12 +34,17 @@ class WrongSectionGeometry(Exception):
 
 class SaveLimit(Exception):
     code = 403
-    description = "Plné úložiště! Současně můžeš mít uloženo maximálně 5 průřezů a 2 konstrukce."
+    description = "Plné úložiště! Současně můžeš mít uloženo maximálně 5 průřezů, 2 konstrukce a 10 materiálů."
 
 
 class FigureError(Exception):
     code = 400
     description = "Neočekávaná chyba při tisku výsledkových obrázků!"
+
+
+class InputValidateError(Exception):
+    code = 200
+    description = "Jeden nebo více vstupů byl zadán špatně!"
 
 
 @app.errorhandler(Exception)
