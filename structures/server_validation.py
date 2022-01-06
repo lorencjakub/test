@@ -159,13 +159,17 @@ class ServerValidation:
 
     def _check_load_cases(self) -> Union[bool, str, list]:
         self.counter["load_cases"] = len(list(self.initial_data["loads"]["loadCases"].keys()))
+        dead_load_cases = 0
 
         for lc_number in list(self.initial_data["loads"]["loadCases"].keys()):
             loads = self.initial_data["loads"]["loadCases"][lc_number]
 
-            if len(loads["name"]) == 0 or loads["loads"] is None or \
-                    loads["loads"]["nodal_loads"] == {} and loads["loads"]["member_loads"] == {}:
+            if len(loads["name"]) == 0 or loads["loads"] is None or (loads["loads"]["nodal_loads"] == {} and
+                                                                     loads["loads"]["member_loads"] == {} and
+                                                                     not loads["selfWeight"]):
                 return "LCError"
+
+            dead_load_cases += 1 if loads["selfWeight"] else 0
 
             nodal_loads = loads["loads"]["nodal_loads"]
             member_loads = loads["loads"]["member_loads"]
@@ -181,6 +185,9 @@ class ServerValidation:
 
                 if load_problem:
                     return load_problem
+
+        if dead_load_cases > 1:
+            return "LCError"
 
         return False
 

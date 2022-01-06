@@ -14,23 +14,26 @@ import re
 
 
 def calculate_structure(structure_data: dict, time_id: str) -> JsonDict:
-    result_pictures = dict()
+    result_pictures, result_tables = dict(), dict()
     invalid_inputs = False
     load_cases, load_combinations = dict(), dict()
 
-    structure_width_from_geometry = (max([float(x) for x in structure_data["geometry"]["nodesX"].split(",")]) - min(
-        [float(x) for x in structure_data["geometry"]["nodesX"].split(",")])) / 100
-    structure_height_from_geometry = (max([float(x) for x in structure_data["geometry"]["nodesY"].split(",")]) - min(
-        [float(x) for x in structure_data["geometry"]["nodesY"].split(",")])) / 100
+    structure_width_from_geometry = max(((max([float(x) for x in structure_data["geometry"]["nodesX"].split(",")]) - min(
+        [float(x) for x in structure_data["geometry"]["nodesX"].split(",")])) / 100), 1)
+    structure_height_from_geometry = max(((max([float(x) for x in structure_data["geometry"]["nodesY"].split(",")]) - min(
+        [float(x) for x in structure_data["geometry"]["nodesY"].split(",")])) / 100), 1)
     structure_width_from_window = 0.8 * structure_data["window"]["width"] / 100
     structure_height_from_window = 0.8 * structure_data["window"]["height"] / 100
 
     ratio = min(structure_width_from_geometry / structure_height_from_geometry,
                 structure_width_from_window / structure_height_from_window)
 
-    figsize = ((structure_data["window"]["width"] - 137) / 96, ((structure_data["window"]["width"] - 137) / ratio) / 96)
+    figsize = (min((structure_data["window"]["width"] - 137) / 96, 7),
+               min(((structure_data["window"]["width"] - 137) / ratio) / 96, 5))
 
     sc, loads, ss = create_structure(structure_data, time_id, figsize=figsize)
+    result_type = [x for x in structure_data["options"] if "type" in x][0] \
+        if len([x for x in structure_data["options"] if "type" in x]) != 0 else False
 
     for load_case in loads.get_load_cases():
         lc = LoadCase(load_case.get_lc_name())
@@ -54,9 +57,15 @@ def calculate_structure(structure_data: dict, time_id: str) -> JsonDict:
             load_combinations.update({len(load_combinations) + 1: co})
 
             if not invalid_inputs:
+                data_list = [ss, structure_data["options"], load_cases, load_combinations, co, time_id, (
+                    structure_data["window"]["height"] - 137, structure_data["window"]["width"] - 137), False]
+
                 result_pictures = plot_co_results(
-                    ss, structure_data["options"], load_cases, load_combinations, co, time_id,
-                    (structure_data["window"]["height"] - 137, structure_data["window"]["width"] - 137), dummy=True)
+                    *data_list) if not result_type or result_type != "table_type_radio" else {}
+                result_tables = create_result_tables(ss, co, time_id) \
+                    if not result_type or result_type != "graphic_type_radio" else {}
+
+                data = {**result_pictures, **result_tables}
 
     else:
         co = LoadCombination("dummy_co")
@@ -65,28 +74,34 @@ def calculate_structure(structure_data: dict, time_id: str) -> JsonDict:
             co.add_load_case(load_case, 1)
 
             if not invalid_inputs:
-                result_pictures = plot_co_results(
-                    ss, structure_data["options"], load_cases, {1: co}, co, time_id,
-                    (structure_data["window"]["height"] - 137, structure_data["window"]["width"] - 137), dummy=True)
+                data_list = [ss, structure_data["options"], load_cases, {1: co}, co, time_id, (
+                    structure_data["window"]["height"] - 137, structure_data["window"]["width"] - 137), True]
 
-    if result_pictures:
+                result_pictures = plot_co_results(
+                    *data_list) if not result_type or result_type != "table_type_radio" else {}
+                result_tables = create_result_tables(ss, co, time_id) if result_type != "graphic_type_radio" else {}
+
+                data = {**result_pictures, **result_tables}
+
+    if result_pictures or result_tables:
         StructureCreator.restart_counter()
         buttons = get_buttons()
-        result_pictures.update({"buttons": buttons})
+        data["buttons"] = buttons
 
     elif invalid_inputs:
-        result_pictures = ("DataError", structure_data)
+        data = ("DataError", structure_data)
 
     else:
-        result_pictures = ("UnstableError", structure_data)
+        data = ("UnstableError", structure_data)
 
-    yield "data:" + json.dumps(result_pictures) + "\n\n"
+    yield "data:" + json.dumps(data) + "\n\n"
 
 
 def create_structure(structure_data: dict, time_hash: str, figsize: tuple = (12, 8))\
         -> Tuple[StructureMap, LoadsMap, StructureSystem]:
     sc, loads = prepare_structure(structure_data)
-    ss = SystemElements(figsize=figsize)
+    ss = SystemElements(figsize=figsize, mesh=int(structure_data["geometry"]["structureFE"]))
+    # ss.remove_loads(dead_load=True)
 
     for member in sc.get_members():
         ss.add_element(**member.get_member_data())
@@ -126,17 +141,16 @@ def prepare_structure(structure_data: dict) -> Tuple[StructureMap, LoadsMap]:
     sc.assign_material_and_section_to_member()
     sc.assign_hinges()
 
-    loads = LoadStructure(structure_data["loads"]["loadCases"], structure_data["loads"]["loadCombinations"])
+    dead_load = dead_load = [{"id": str(member.get_id()), "self_weight": str(member.get_member_data()["g"])}
+                             for member in sc.get_members()]
+    loads = LoadStructure(structure_data["loads"]["loadCases"], structure_data["loads"]["loadCombinations"], dead_load)
 
     return sc, loads
 
 
-def plot_co_results(ss: object, options: dict, load_cases: dict, load_combinations: dict,
+def plot_co_results(ss: StructureSystem, options: dict, load_cases: dict, load_combinations: dict,
                     co: AnastructLoadCombination, time_hash: str, dimensions: tuple,
                     dummy: bool = False) -> Union[dict, bool]:
-
-    # TODO: implementovat na webu radio button pro vrácení grafických, tabulkových nebo obojích výsledků
-    # TODO: vylepšit plotování podpor v poměru k velikosti konstrukce
 
     try:
         results = co.solve(ss)
@@ -150,11 +164,13 @@ def plot_co_results(ss: object, options: dict, load_cases: dict, load_combinatio
         # kombinace neplotují zatížení, jen výsledky
         # members_results = results[k].get_element_results(verbose=True)
         members_results = results[k].get_element_results()
-        results_keys = {"N": 0, "wmax": 0, "wmin": 0, "u": 0, "Mmin": 0, "Mmax": 0, "Qmin": 0, "Qmax": 0}
+        results_keys = {"N_1": 0, "wmax": 0, "wmin": 0, "u": 0, "Mmin": 0, "Mmax": 0, "Qmin": 0, "Qmax": 0}
 
         for member in members_results:
             for key in results_keys:
                 results_keys[key] += 1 if member[key] != 0 else 0
+
+        results_keys["N"] = results_keys.pop("N_1")
 
         directory = os.getcwd() + '/root/static/pictures/users/temp'
         path_to_temp = directory[directory.index("static"):]
@@ -217,7 +233,7 @@ def plot_co_results(ss: object, options: dict, load_cases: dict, load_combinatio
                     plt.savefig(f"{directory}/co{co_number + 1}_{diagram}{time_hash}.svg", format="svg",
                                 bbox_inches="tight")
 
-                    with open(f"{directory}/lc{lc_number + 1}_{diagram}{time_hash}.svg", "rb") as xml:
+                    with open(f"{directory}/co{co_number + 1}_{diagram}{time_hash}.svg", "rb") as xml:
                         picture = xml.read().decode("utf-8")
 
                     try:
@@ -228,8 +244,8 @@ def plot_co_results(ss: object, options: dict, load_cases: dict, load_combinatio
                         dimensions = [dimensions[0], dimensions[1]]
 
                     result_pictures.update({
-                        f"{lc_name} - {title}": {
-                            "path": f"{path_to_temp}/lc{lc_number + 1}_{diagram}{time_hash}.svg",
+                        f"{co.name} - {title}": {
+                            "path": f"{path_to_temp}/co{co_number + 1}_{diagram}{time_hash}.svg",
                             "height": dimensions[0],
                             "width": dimensions[1]
                         }
@@ -297,9 +313,8 @@ def get_title(diagram: str) -> Union[str, bool]:
 
 
 def get_buttons() -> list:
-    pdf_button = '<input type="button" id="pdfSave" value="Ulož do PDF" onclick="pdfSave();"' \
-                 'class="btn btn-secondary rounded m-1 disabled" disabled>'
-    # TODO: aktivovat button, jamkmile bude funkční tisk konstrukce do pdf
+    pdf_button = '<input type="button" id="pdfSave" value="Stáhnout výsledky" onclick="pdfSave();"' \
+                 'class="btn btn-secondary rounded m-1">'
 
     new_button = '<input type= "button" id="nextSection" value="Nová konstrukce" onclick="nextStructure();"' \
                  'class="btn btn-secondary rounded m-1">'
@@ -338,3 +353,45 @@ def is_there_results(diagram: str, results_keys: dict) -> bool:
         results += 1 if round(results_keys[key], 3) != 0 else 0
 
     return True if results != 0 else False
+
+
+def create_result_tables(ss: StructureSystem, co: AnastructLoadCombination, time_hash: str)\
+        -> Union[dict, bool]:
+
+    try:
+        results = co.solve(ss)
+
+    except FEMException:
+        return False
+
+    result_tables = dict()
+    load_case_member_results = dict()
+
+    for k in list(results.keys()):
+        all_members_results = results[k].get_element_results(verbose=True)
+        # all_nodes_results = results[k].get_node_results_system()
+        member_results = {"u": 0, "w": 0, "M": 0, "Q": 0}
+
+        for member in all_members_results:
+            for key in [key for key in list(member_results.keys()) if key != "N" and key != "x"]:
+                member_results[key] = ["{:.3f}".format(round(x, 3)) for x in list(member[key])]
+
+            axial_forces = []
+
+            for x in range(int(ss.plotter.mesh)):
+                axial_forces.append("{:.3f}".format(round(
+                    member["N_1"] + x * (member["N_2"] - member["N_1"]) / int(ss.plotter.mesh), 3)))
+
+            member_results["N"] = axial_forces
+            member_results["x"] = ["{:.3f}".format(round(0 + x * (member["length"] / int(ss.plotter.mesh)), 3))
+                                   for x in range(int(ss.plotter.mesh  ))]
+            load_case_member_results[member["id"]] = member_results.copy()
+
+        if k == "combination":
+            if co.name != "dummy_co":
+                result_tables[co.name] = load_case_member_results.copy()
+
+        else:
+            result_tables[k] = load_case_member_results.copy()
+
+    return result_tables

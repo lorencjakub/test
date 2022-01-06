@@ -311,7 +311,7 @@ class MySection(StructureElement):
         return self.__members
 
     def set_material_to_section(self, young: Optional[float] = None, weight: Optional[float] = None) -> None:
-        self.__weight = self.__area * weight
+        self.__weight = round(self.__area * weight * 1e-6, 1)
         self.__EA = young * self.__area * 1e-3
         self.__EI = young * self.__moment_of_inertia * 1e-9
         # E přijde v GPa, A+Iy v mm4, výsledné deformace v mm
@@ -383,17 +383,18 @@ class MySupport(StructureElement):
 class LoadStructure:
     """Creator of CO schemas and LC with loads."""
 
-    def __init__(self, lc_data: dict, co_data: dict) -> None:
+    def __init__(self, lc_data: dict, co_data: dict, dead_load_data: list) -> None:
         self.__LOAD_CASES, self.__LOAD_COMBINATIONS = list(), list()
         self.__lc_data = lc_data
         self.__co_data = co_data
-        self.__create_load_cases()
+        self.__create_load_cases(dead_load_data)
         self.__add_loads()
         self.__define_combinations()
 
-    def __create_load_cases(self) -> None:
+    def __create_load_cases(self, dead_load_data: list) -> None:
         for lc in self.__lc_data.keys():
             self.__LOAD_CASES.append(MyLoadCase(self.__lc_data[lc]))
+            self.__LOAD_CASES[-1].define_dead_load(dead_load_data)
 
     def __add_loads(self) -> None:
         for lc in self.__LOAD_CASES:
@@ -433,6 +434,13 @@ class MyLoadCase:
     def define_member_loads(self) -> None:
         for member_load in self.__member_loads_data.keys():
             self.__member_loads.append(MyMemberLoad(self.__member_loads_data[member_load], member_load))
+
+    def define_dead_load(self, dead_load_data: list) -> None:
+        if self.__self_weight_active:
+            for member_data in dead_load_data:
+                self.__member_loads.append(MyMemberLoad({"members": member_data["id"],
+                                                         "magnitude": member_data["self_weight"],
+                                                         "direction": "y"}, "0" + str(member_data["id"])))
 
     def get_lc_name(self) -> str:
         return self.__lc_name
